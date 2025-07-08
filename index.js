@@ -11,66 +11,56 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 10000;
 
-// Sert les fichiers HTML statiques
+// 📁 Sert les fichiers statiques (HTML)
 app.use(express.static(__dirname));
 
-// 🔁 Mise à jour auto toutes les 5 minutes
+// 🔁 Met à jour les créneaux toutes les 5 minutes
 cron.schedule('*/5 * * * *', async () => {
   await updateCalendly(
-    'https://calendly.com/ev-grandiose/seance-1h-avec-lana',
+    'https://api.calendly.com/event_types/ce6fc84f-4b45-48c7-b7a1-d41697866d3e/available_times',
     'dispo-190.html'
   );
+
   await updateCalendly(
-    'https://calendly.com/ev-grandiose/1er-rdv-accompagnement-4-seances-avec-lana',
+    'https://api.calendly.com/event_types/f415b12e-4a3c-42e6-9de4-93198ad9b1a4/available_times',
     'dispo-600.html'
   );
 });
 
-// 🟡 Mise à jour immédiate au démarrage
-updateCalendly(
-  'https://calendly.com/ev-grandiose/seance-1h-avec-lana',
-  'dispo-190.html'
-);
-updateCalendly(
-  'https://calendly.com/ev-grandiose/1er-rdv-accompagnement-4-seances-avec-lana',
-  'dispo-600.html'
-);
-
-async function updateCalendly(eventLink, outputFile) {
+// 🔧 Fonction pour récupérer les créneaux et écrire le fichier HTML
+async function updateCalendly(apiUrl, outputFile) {
   try {
-    const response = await fetch('https://api.calendly.com/scheduling_links', {
-      method: 'POST',
+    const response = await fetch(apiUrl, {
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.CALENDLY_API_KEY}`
-      },
-      body: JSON.stringify({
-        owner: eventLink,
-        max_event_count: 1
-      })
+        'Authorization': `Bearer ${process.env.CALENDLY_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
     });
 
     const data = await response.json();
+    const slots = data.collection;
 
-    if (!response.ok || !data.resource?.booking_url) {
-      console.error(`❌ Erreur Calendly (${outputFile})`, data);
+    if (!slots || slots.length === 0) {
+      fs.writeFileSync(path.join(__dirname, outputFile), `Aucun créneau disponible pour le moment.`);
+      console.log(`❌ Aucun créneau dans ${outputFile}`);
       return;
     }
 
-    const bookingUrl = data.resource.booking_url;
-    const html = `
-      <div style="font-family: sans-serif; font-size: 16px;">
-        Prochain créneau disponible : ${bookingUrl}
-      </div>
-    `;
+    // Prend le premier créneau et le formate proprement
+    const start = new Date(slots[0].start_time);
+    const options = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' };
+    const formatted = start.toLocaleString('fr-FR', options);
 
-    fs.writeFileSync(path.join(__dirname, outputFile), html);
+    const finalText = `Prochain créneau : ${formatted.charAt(0).toUpperCase() + formatted.slice(1)}`;
+
+    fs.writeFileSync(path.join(__dirname, outputFile), finalText);
     console.log(`✅ ${outputFile} mis à jour`);
-  } catch (error) {
-    console.error(`❌ Exception Calendly (${outputFile})`, error);
+  } catch (err) {
+    console.error(`❌ Erreur Calendly (${outputFile})`, err);
   }
 }
 
+// ▶️ Démarre le serveur
 app.listen(port, () => {
   console.log(`✅ Serveur en écoute sur le port ${port}`);
 });
