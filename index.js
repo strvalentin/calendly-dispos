@@ -26,6 +26,16 @@ cron.schedule('*/5 * * * *', async () => {
   );
 });
 
+// 🟡 Mise à jour immédiate au démarrage (sinon Render ne trouve rien)
+updateCalendly(
+  'https://calendly.com/ev-grandiose/seance-1h-avec-lana',
+  'dispo-190.html'
+);
+updateCalendly(
+  'https://calendly.com/ev-grandiose/1er-rdv-accompagnement-4-seances-avec-lana',
+  'dispo-600.html'
+);
+
 async function updateCalendly(eventLink, outputFile) {
   try {
     const response = await fetch('https://api.calendly.com/scheduling_links', {
