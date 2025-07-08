@@ -26,7 +26,7 @@ cron.schedule('*/5 * * * *', async () => {
   );
 });
 
-// 🟡 Mise à jour immédiate au démarrage (sinon Render ne trouve rien)
+// 🟡 Mise à jour immédiate au démarrage
 updateCalendly(
   'https://calendly.com/ev-grandiose/seance-1h-avec-lana',
   'dispo-190.html'
@@ -60,7 +60,7 @@ async function updateCalendly(eventLink, outputFile) {
     const bookingUrl = data.resource.booking_url;
     const html = `
       <div style="font-family: sans-serif; font-size: 16px;">
-        Prochain créneau disponible : <a href="${bookingUrl}" target="_blank">${bookingUrl}</a>
+        Prochain créneau disponible : ${bookingUrl}
       </div>
     `;
 
