@@ -20,26 +20,8 @@ cron.schedule('*/5 * * * *', async () => {
 
 async function updateCalendly(eventLink, outputFile) {
   try {
-    const response = await fetch(`https://api.calendly.com/scheduling_links`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.CALENDLY_API_KEY}`
-      },
-      body: JSON.stringify({
-        owner: eventLink,
-        max_event_count: 1
-      })
-    });
+    const schedulingUrl = eventLink;
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error(`❌ Erreur pour ${eventLink}`, data);
-      return;
-    }
-
-    const schedulingUrl = data.resource?.booking_url || 'Lien non disponible';
     const html = `<div style="font-family: sans-serif; font-size: 16px;">Prochain créneau disponible : <a href="${schedulingUrl}" target="_blank">${schedulingUrl}</a></div>`;
 
     fs.writeFileSync(path.join(__dirname, outputFile), html);
